@@ -6,7 +6,7 @@ A [Raycast](https://www.raycast.com/) extension for trading — view market stat
 
 | Command | Description |
 |---|---|
-| **Display Markets** | Shows a panel with the current `[Markets Status]` |
+| **Display Markets** | Shows a panel with the current Markets Status |
 | **Display Watch List** | Shows your personal watch list |
 | **Configure Watch List** | Add or remove symbols from your watch list |
 
