@@ -35,6 +35,11 @@ export default function DisplayMarkets() {
   return (
     <List isLoading={isLoading} navigationTitle="Markets Status">
       {error ? <List.EmptyView title="Failed to load markets" description={error.message} /> : null}
+      {snapshot ? (
+        <List.Section title="最新查询时间">
+          <List.Item title={queriedAt} />
+        </List.Section>
+      ) : null}
       {snapshot?.sections.map((section) => (
         <List.Section key={section.title} title={section.title}>
           {section.items.map((quote) => (
@@ -45,7 +50,6 @@ export default function DisplayMarkets() {
               accessories={[
                 { text: formatMarketQuoteValue(quote), tooltip: "查询值" },
                 { text: formatPercent(quote.changePercent), tooltip: "当日涨跌幅" },
-                { text: queriedAt, tooltip: "最新查询时间" },
               ]}
               actions={
                 <ActionPanel>
