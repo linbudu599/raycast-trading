@@ -28,6 +28,18 @@
       "mode": "view"
     },
     {
+      "name": "display-watch-funds",
+      "title": "Display Watch Funds",
+      "description": "Display watched Mainland China fund NAV performance.",
+      "mode": "view"
+    },
+    {
+      "name": "search-stock",
+      "title": "Search Stock",
+      "description": "Search latest stock quotes with trading session status.",
+      "mode": "view"
+    },
+    {
       "name": "configure-watchlist",
       "title": "Configure Watch List",
       "description": "Add or remove symbols from your watch list.",
@@ -38,14 +50,15 @@
     "build": "ray build -e dist",
     "dev": "ray develop",
     "lint": "ray lint",
+    "release": "ray publish",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@raycast/api": "^1.104.13"
   },
   "devDependencies": {
-    "@raycast/utils": "^2.2.4",
     "@types/react": "^19.2.14",
+    "prettier": "^3.8.3",
     "typescript": "^5.0.0"
   }
 }

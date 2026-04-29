@@ -1,86 +1,4 @@
-export type MarketTrend = "up" | "down" | "flat";
-
-export interface MarketSnapshot {
-  symbol: string;
-  name: string;
-  status: string;
-  price: number;
-  changePercent: number;
-  trend: MarketTrend;
-}
-
-export interface WatchlistItem {
-  symbol: string;
-  name: string;
-  price: number;
-  changePercent: number;
-  note: string;
-}
-
-export interface ConfigurableSymbol {
-  symbol: string;
-  name: string;
-  isTracked: boolean;
-}
-
-export const MARKET_SNAPSHOTS: readonly MarketSnapshot[] = [
-  {
-    symbol: "SPY",
-    name: "S&P 500 ETF",
-    status: "Open",
-    price: 512.32,
-    changePercent: 0.82,
-    trend: "up",
-  },
-  {
-    symbol: "QQQ",
-    name: "Nasdaq 100 ETF",
-    status: "Open",
-    price: 438.19,
-    changePercent: 1.14,
-    trend: "up",
-  },
-  {
-    symbol: "BTC",
-    name: "Bitcoin",
-    status: "24/7",
-    price: 67240.18,
-    changePercent: -0.36,
-    trend: "down",
-  },
-];
-
-export const WATCHLIST_ITEMS: readonly WatchlistItem[] = [
-  {
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    price: 184.86,
-    changePercent: 0.42,
-    note: "Earnings watch",
-  },
-  {
-    symbol: "NVDA",
-    name: "NVIDIA Corp.",
-    price: 903.56,
-    changePercent: 1.27,
-    note: "AI momentum",
-  },
-  {
-    symbol: "TSLA",
-    name: "Tesla Inc.",
-    price: 172.63,
-    changePercent: -0.71,
-    note: "Volatile",
-  },
-];
-
-export const CONFIGURABLE_SYMBOLS: readonly ConfigurableSymbol[] = [
-  { symbol: "AAPL", name: "Apple Inc.", isTracked: true },
-  { symbol: "NVDA", name: "NVIDIA Corp.", isTracked: true },
-  { symbol: "TSLA", name: "Tesla Inc.", isTracked: true },
-  { symbol: "MSFT", name: "Microsoft Corp.", isTracked: false },
-  { symbol: "AMZN", name: "Amazon.com Inc.", isTracked: false },
-];
+import type { MarketQuote, MarketQuoteDetail, MarketTrendSummary, StockQuote } from "./mock-api";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -89,18 +7,79 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
 });
 
-export const formatCurrency = (value: number) => currencyFormatter.format(value);
+const decimalFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
+
+const cnyFormatter = new Intl.NumberFormat("zh-CN", {
+  currency: "CNY",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+  style: "currency",
+});
+
+const queryTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  month: "2-digit",
+  second: "2-digit",
+  year: "numeric",
+});
+
+export const formatUsd = (value: number) => currencyFormatter.format(value);
 
 export const formatPercent = (value: number) => `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
 
-export const formatTrend = (trend: MarketTrend) => {
-  if (trend === "up") {
-    return "Rising";
+export const formatMarketQuoteValue = ({ unit, value }: Pick<MarketQuote, "unit" | "value">) => {
+  if (unit === "usdPerOunce") {
+    return `${formatUsd(value)} / oz`;
   }
 
-  if (trend === "down") {
-    return "Falling";
+  if (unit === "usdt") {
+    return `${decimalFormatter.format(value)} USDT`;
   }
 
-  return "Flat";
+  return `${decimalFormatter.format(value)} pts`;
 };
+
+const formatTrendLine = ({ changePercent, label, note }: MarketTrendSummary) =>
+  `- ${label}: ${formatPercent(changePercent)} (${note})`;
+
+export const formatMarketDetailMarkdown = (detail: MarketQuoteDetail) =>
+  [
+    `# ${detail.quote.name}`,
+    "",
+    `- 标的代码: ${detail.quote.symbol}`,
+    `- 最新报价: ${formatMarketQuoteValue(detail.quote)}`,
+    `- 当前状态: ${detail.session}`,
+    `- 查询时间: ${formatQueryTime(detail.queriedAt)}`,
+    "",
+    "## 核心走势",
+    formatTrendLine(detail.yesterday),
+    formatTrendLine(detail.oneMonth),
+    formatTrendLine(detail.yearToDate),
+    ...(detail.extendedSession
+      ? [
+          "",
+          "## 美股扩展时段",
+          `- ${detail.extendedSession.session}: ${formatMarketQuoteValue({
+            unit: detail.quote.unit,
+            value: detail.extendedSession.value,
+          })} / ${formatPercent(detail.extendedSession.changePercent)} (${detail.extendedSession.note})`,
+        ]
+      : []),
+  ].join("\n");
+
+export const formatFundNav = (value: number) => value.toFixed(4);
+
+export const calculateFundDailyEarningsPerTenThousand = (dailyChangePercent: number) =>
+  10000 * (dailyChangePercent / 100);
+
+export const formatDailyEarnings = (value: number) => cnyFormatter.format(value);
+
+export const formatStockQuoteValue = ({ currency, value }: Pick<StockQuote, "currency" | "value">) =>
+  `${decimalFormatter.format(value)} ${currency}`;
+
+export const formatQueryTime = (value: Date) => queryTimeFormatter.format(value);

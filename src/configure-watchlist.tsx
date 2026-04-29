@@ -1,6 +1,13 @@
-import { List } from "@raycast/api";
+import { Action, ActionPanel, List, showToast, Toast } from "@raycast/api";
 
-import { CONFIGURABLE_SYMBOLS } from "./demo-data";
+import { CONFIGURABLE_SYMBOLS } from "./mock-api";
+
+const showDemoConfigurationToast = (symbol: string, isTracked: boolean) =>
+  showToast({
+    style: Toast.Style.Success,
+    title: isTracked ? "Removed from demo watch list" : "Added to demo watch list",
+    message: `${symbol} will persist once real storage is connected.`,
+  });
 
 export default function ConfigureWatchList() {
   return (
@@ -11,6 +18,14 @@ export default function ConfigureWatchList() {
           title={item.symbol}
           subtitle={item.name}
           accessories={[{ text: item.isTracked ? "Tracked" : "Available" }]}
+          actions={
+            <ActionPanel>
+              <Action
+                title={item.isTracked ? "Remove from Demo Watch List" : "Add to Demo Watch List"}
+                onAction={() => void showDemoConfigurationToast(item.symbol, item.isTracked)}
+              />
+            </ActionPanel>
+          }
         />
       ))}
     </List>
