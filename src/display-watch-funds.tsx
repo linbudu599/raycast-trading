@@ -17,9 +17,7 @@ export default function DisplayWatchFunds() {
   return (
     <List isLoading={snapshot.isLoading} isShowingDetail navigationTitle="Watch Funds">
       {snapshot.data?.items.map((fund) => {
-        const dailyIncome = formatDailyEarnings(
-          calculateFundDailyEarningsPerTenThousand(fund.nav, fund.dailyChangePercent),
-        );
+        const dailyIncome = formatDailyEarnings(calculateFundDailyEarningsPerTenThousand(fund.dailyChangePercent));
 
         return (
           <List.Item
@@ -48,6 +46,9 @@ export default function DisplayWatchFunds() {
           />
         );
       })}
+      {snapshot.error ? (
+        <List.EmptyView title="Failed to load watched funds" description={snapshot.error.message} />
+      ) : null}
     </List>
   );
 }

@@ -1,5 +1,5 @@
 import { List } from "@raycast/api";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { formatPercent, formatQueryTime, formatStockQuoteValue } from "./demo-data";
 import { searchStockQuotes } from "./mock-api";
@@ -7,7 +7,8 @@ import { useMockRequest } from "./use-mock-request";
 
 export default function SearchStock() {
   const [searchText, setSearchText] = useState("");
-  const result = useMockRequest(() => searchStockQuotes(searchText), [searchText]);
+  const requestQuotes = useCallback(() => searchStockQuotes(searchText), [searchText]);
+  const result = useMockRequest(requestQuotes, [requestQuotes]);
   const items = result.data?.items ?? [];
   const queriedAt = result.data ? formatQueryTime(result.data.queriedAt) : "";
 
@@ -19,7 +20,10 @@ export default function SearchStock() {
       searchBarPlaceholder="Search symbol, name, or market"
       throttle
     >
-      {items.length === 0 && !result.isLoading ? (
+      {result.error ? (
+        <List.EmptyView title="Failed to search stock quotes" description={result.error.message} />
+      ) : null}
+      {items.length === 0 && !result.isLoading && !result.error ? (
         <List.EmptyView title="No stock quotes found" description="Try another symbol, name, or market." />
       ) : null}
       <List.Section title="搜索结果">

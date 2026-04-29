@@ -1,4 +1,5 @@
 import { Action, ActionPanel, Detail, List } from "@raycast/api";
+import { useCallback } from "react";
 
 import { formatMarketDetailMarkdown, formatMarketQuoteValue, formatPercent, formatQueryTime } from "./demo-data";
 import { fetchMarketQuoteDetail, fetchMarketSnapshot } from "./mock-api";
@@ -9,23 +10,31 @@ interface MarketDetailProps {
 }
 
 function MarketDetail({ symbol }: MarketDetailProps) {
-  const { data: detail, isLoading } = useMockRequest(() => fetchMarketQuoteDetail(symbol), [symbol]);
+  const requestDetail = useCallback(() => fetchMarketQuoteDetail(symbol), [symbol]);
+  const { data: detail, error, isLoading } = useMockRequest(requestDetail, [requestDetail]);
 
-  return (
-    <Detail
-      isLoading={isLoading}
-      markdown={detail ? formatMarketDetailMarkdown(detail) : "Loading market detail..."}
-      navigationTitle={detail?.quote.name ?? symbol}
-    />
-  );
+  const markdown = (() => {
+    if (error) {
+      return `# Failed to load market detail\n\n${error.message}`;
+    }
+
+    if (detail) {
+      return formatMarketDetailMarkdown(detail);
+    }
+
+    return isLoading ? "Loading market detail..." : `# Market detail not found\n\nNo mock detail found for ${symbol}.`;
+  })();
+
+  return <Detail isLoading={isLoading} markdown={markdown} navigationTitle={detail?.quote.name ?? symbol} />;
 }
 
 export default function DisplayMarkets() {
-  const { data: snapshot, isLoading } = useMockRequest(fetchMarketSnapshot, []);
+  const { data: snapshot, error, isLoading } = useMockRequest(fetchMarketSnapshot, []);
   const queriedAt = snapshot ? formatQueryTime(snapshot.queriedAt) : "";
 
   return (
     <List isLoading={isLoading} navigationTitle="Markets Status">
+      {error ? <List.EmptyView title="Failed to load markets" description={error.message} /> : null}
       {snapshot?.sections.map((section) => (
         <List.Section key={section.title} title={section.title}>
           {section.items.map((quote) => (
