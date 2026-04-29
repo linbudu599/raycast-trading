@@ -93,7 +93,7 @@ export const formatCurrency = (value: number) => currencyFormatter.format(value)
 
 export const formatPercent = (value: number) => `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
 
-const trendLabel = (trend: MarketTrend) => {
+export const formatTrend = (trend: MarketTrend) => {
   if (trend === "up") {
     return "Rising";
   }
@@ -104,20 +104,3 @@ const trendLabel = (trend: MarketTrend) => {
 
   return "Flat";
 };
-
-const marketRows = MARKET_SNAPSHOTS.map(
-  (market) =>
-    `| ${market.symbol} | ${market.name} | ${formatCurrency(market.price)} | ${formatPercent(
-      market.changePercent,
-    )} | ${market.status} / ${trendLabel(market.trend)} |`,
-);
-
-export const MARKET_STATUS_MARKDOWN = [
-  "# Markets Status",
-  "",
-  "Demo market snapshot with precomputed rows.",
-  "",
-  "| Symbol | Market | Last | Change | Status |",
-  "|---|---|---:|---:|---|",
-  ...marketRows,
-].join("\n");
