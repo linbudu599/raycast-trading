@@ -58,6 +58,13 @@ const decimalFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
 });
 
+const cnyFormatter = new Intl.NumberFormat("zh-CN", {
+  currency: "CNY",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+  style: "currency",
+});
+
 const queryTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
   day: "2-digit",
   hour: "2-digit",
@@ -84,6 +91,16 @@ export const formatMarketQuoteValue = ({ unit, value }: Pick<MarketQuote, "unit"
 };
 
 export const formatFundNav = (value: number) => value.toFixed(4);
+
+export const calculateFundDailyEarningsPerTenThousand = (nav: number, dailyChangePercent: number) => {
+  const changeRate = dailyChangePercent / 100;
+  const previousNav = nav / (1 + changeRate);
+  const navChange = nav - previousNav;
+
+  return navChange * (10000 / previousNav);
+};
+
+export const formatDailyEarnings = (value: number) => cnyFormatter.format(value);
 
 export const formatStockQuoteValue = ({ currency, value }: Pick<StockQuote, "currency" | "value">) =>
   `${decimalFormatter.format(value)} ${currency}`;
