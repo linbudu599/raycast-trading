@@ -1,17 +1,51 @@
 {
   "name": "raycast-trading",
+  "title": "Trading",
   "version": "0.0.1",
-  "description": "A Raycast extension for trading",
-  "type": "module",
+  "description": "A Raycast extension for trading — markets status, watch list, and configuration.",
+  "icon": "extension-icon.png",
+  "author": "linbudu599",
+  "categories": [
+    "Finance"
+  ],
+  "license": "MIT",
   "engines": {
     "node": ">=22",
     "pnpm": ">=10"
   },
   "packageManager": "pnpm@10.33.2",
+  "commands": [
+    {
+      "name": "display-markets",
+      "title": "Display Markets",
+      "description": "Display the current markets status panel.",
+      "mode": "view"
+    },
+    {
+      "name": "display-watchlist",
+      "title": "Display Watch List",
+      "description": "Display your personal watch list.",
+      "mode": "view"
+    },
+    {
+      "name": "configure-watchlist",
+      "title": "Configure Watch List",
+      "description": "Add or remove symbols from your watch list.",
+      "mode": "view"
+    }
+  ],
   "scripts": {
-    "typecheck": "tsgo --noEmit"
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "lint": "ray lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@raycast/api": "^1.104.13"
   },
   "devDependencies": {
-    "@typescript/native-preview": "latest"
+    "@raycast/utils": "^2.2.4",
+    "@types/react": "^19.2.14",
+    "typescript": "^5.0.0"
   }
 }
