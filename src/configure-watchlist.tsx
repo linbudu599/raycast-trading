@@ -1,6 +1,6 @@
 import { Action, ActionPanel, List, showToast, Toast } from "@raycast/api";
 
-import { CONFIGURABLE_SYMBOLS } from "./mock-api";
+import { CONFIGURABLE_SYMBOLS } from "./lib/mock-api";
 
 const showDemoConfigurationToast = (symbol: string, isTracked: boolean) =>
   showToast({

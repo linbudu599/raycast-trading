@@ -1,9 +1,9 @@
 import { List } from "@raycast/api";
 import { useCallback, useState } from "react";
 
-import { formatPercent, formatQueryTime, formatStockQuoteValue } from "./demo-data";
-import { searchStockQuotes } from "./mock-api";
-import { useMockRequest } from "./use-mock-request";
+import { formatPercent, formatQueryTime, formatStockQuoteValue } from "./lib/demo-data";
+import { searchStockQuotes } from "./lib/mock-api";
+import { useMockRequest } from "./lib/use-mock-request";
 
 export default function SearchStock() {
   const [searchText, setSearchText] = useState("");

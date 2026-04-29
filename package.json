@@ -1,6 +1,6 @@
 {
   "name": "raycast-trading",
-  "title": "Trading",
+  "title": "Raycast Trading",
   "version": "0.0.1",
   "description": "A Raycast extension for trading — markets status, watch list, and configuration.",
   "icon": "extension-icon.png",
@@ -14,12 +14,43 @@
     "pnpm": ">=10"
   },
   "packageManager": "pnpm@10.33.2",
+  "preferences": [
+    {
+      "name": "changeColorStyle",
+      "type": "dropdown",
+      "required": true,
+      "title": "Change Color Style",
+      "description": "Choose how market gains and losses are highlighted.",
+      "default": "green-up-red-down",
+      "data": [
+        {
+          "title": "Green Up / Red Down",
+          "value": "green-up-red-down"
+        },
+        {
+          "title": "Red Up / Green Down",
+          "value": "red-up-green-down"
+        }
+      ]
+    }
+  ],
   "commands": [
     {
       "name": "display-markets",
       "title": "Display Markets",
       "description": "Display the current markets status panel.",
-      "mode": "view"
+      "mode": "view",
+      "preferences": [
+        {
+          "name": "showTradingOnly",
+          "type": "checkbox",
+          "required": false,
+          "title": "Only Show Trading Markets",
+          "label": "Only show markets that are currently trading",
+          "description": "Only show markets that are currently trading.",
+          "default": false
+        }
+      ]
     },
     {
       "name": "display-watchlist",
@@ -54,9 +85,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@raycast/api": "^1.104.13"
+    "@raycast/api": "^1.104.13",
+    "dotenv": "^17.4.2",
+    "longbridge": "^4.0.5"
   },
   "devDependencies": {
+    "@types/node": "^22.19.17",
     "@types/react": "^19.2.14",
     "prettier": "^3.8.3",
     "typescript": "^5.0.0"

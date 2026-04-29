@@ -1,7 +1,7 @@
 import { List } from "@raycast/api";
 
-import { formatPercent, formatUsd } from "./demo-data";
-import { WATCHLIST_ITEMS } from "./mock-api";
+import { formatPercent, formatUsd } from "./lib/demo-data";
+import { WATCHLIST_ITEMS } from "./lib/mock-api";
 
 export default function DisplayWatchList() {
   return (
@@ -11,10 +11,7 @@ export default function DisplayWatchList() {
           key={item.symbol}
           title={item.symbol}
           subtitle={item.name}
-          accessories={[
-            { text: formatUsd(item.price) },
-            { text: formatPercent(item.changePercent), tooltip: item.note },
-          ]}
+          accessories={[{ text: formatUsd(item.price) }, { text: formatPercent(item.changePercent) }]}
         />
       ))}
     </List>

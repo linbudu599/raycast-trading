@@ -1,4 +1,4 @@
-import type { MarketQuote, MarketQuoteDetail, MarketTrendSummary, StockQuote } from "./mock-api";
+import type { MarketQuote, MarketQuoteDetail, StockQuote } from "./mock-api";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -32,20 +32,11 @@ export const formatUsd = (value: number) => currencyFormatter.format(value);
 
 export const formatPercent = (value: number) => `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
 
-export const formatMarketQuoteValue = ({ unit, value }: Pick<MarketQuote, "unit" | "value">) => {
-  if (unit === "usdPerOunce") {
-    return `${formatUsd(value)} / oz`;
-  }
+export const formatMarketQuoteValue = ({ value }: Pick<MarketQuote, "unit" | "value">) =>
+  decimalFormatter.format(value);
 
-  if (unit === "usdt") {
-    return `${decimalFormatter.format(value)} USDT`;
-  }
-
-  return `${decimalFormatter.format(value)} pts`;
-};
-
-const formatTrendLine = ({ changePercent, label, note }: MarketTrendSummary) =>
-  `- ${label}: ${formatPercent(changePercent)} (${note})`;
+const formatTrendLine = ({ changePercent, label }: MarketQuoteDetail["yesterday"]) =>
+  `- ${label}: ${formatPercent(changePercent)}`;
 
 export const formatMarketDetailMarkdown = (detail: MarketQuoteDetail) =>
   [
@@ -67,7 +58,7 @@ export const formatMarketDetailMarkdown = (detail: MarketQuoteDetail) =>
           `- ${detail.extendedSession.session}: ${formatMarketQuoteValue({
             unit: detail.quote.unit,
             value: detail.extendedSession.value,
-          })} / ${formatPercent(detail.extendedSession.changePercent)} (${detail.extendedSession.note})`,
+          })} / ${formatPercent(detail.extendedSession.changePercent)}`,
         ]
       : []),
   ].join("\n");

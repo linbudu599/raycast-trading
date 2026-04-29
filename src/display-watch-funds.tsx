@@ -1,14 +1,14 @@
 import { List } from "@raycast/api";
 
-import { fetchWatchFunds } from "./mock-api";
 import {
   calculateFundDailyEarningsPerTenThousand,
   formatDailyEarnings,
   formatFundNav,
   formatPercent,
   formatQueryTime,
-} from "./demo-data";
-import { useMockRequest } from "./use-mock-request";
+} from "./lib/demo-data";
+import { fetchWatchFunds } from "./lib/mock-api";
+import { useMockRequest } from "./lib/use-mock-request";
 
 export default function DisplayWatchFunds() {
   const snapshot = useMockRequest(fetchWatchFunds);
