@@ -1,13 +1,14 @@
 import { List } from "@raycast/api";
 
-import { formatMarketQuoteValue, formatPercent, formatQueryTime, MARKET_QUOTE_SECTIONS } from "./demo-data";
+import { formatMarketQuoteValue, formatPercent, formatQueryTime, getMockMarketSnapshot } from "./demo-data";
 
 export default function DisplayMarkets() {
-  const queriedAt = formatQueryTime(new Date());
+  const snapshot = getMockMarketSnapshot();
+  const queriedAt = formatQueryTime(snapshot.queriedAt);
 
   return (
     <List navigationTitle="Markets Status">
-      {MARKET_QUOTE_SECTIONS.map((section) => (
+      {snapshot.sections.map((section) => (
         <List.Section key={section.title} title={section.title}>
           {section.items.map((quote) => (
             <List.Item
@@ -17,7 +18,7 @@ export default function DisplayMarkets() {
               accessories={[
                 { text: formatMarketQuoteValue(quote), tooltip: "查询值" },
                 { text: formatPercent(quote.changePercent), tooltip: "当日涨跌幅" },
-                { text: queriedAt },
+                { text: queriedAt, tooltip: "最新查询时间" },
               ]}
             />
           ))}

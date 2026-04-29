@@ -17,6 +17,11 @@ export interface MarketQuoteSection {
   items: readonly MarketQuote[];
 }
 
+export interface MarketSnapshot {
+  queriedAt: Date;
+  sections: readonly MarketQuoteSection[];
+}
+
 export interface WatchlistItem {
   symbol: string;
   name: string;
@@ -149,6 +154,11 @@ export const MARKET_QUOTE_SECTIONS: readonly MarketQuoteSection[] = [
     items: MARKET_QUOTES.filter((quote) => quote.category === "CN Index"),
   },
 ];
+
+export const getMockMarketSnapshot = (): MarketSnapshot => ({
+  queriedAt: new Date(),
+  sections: MARKET_QUOTE_SECTIONS,
+});
 
 export const WATCHLIST_ITEMS: readonly WatchlistItem[] = [
   {
