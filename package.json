@@ -1,0 +1,17 @@
+{
+  "name": "raycast-trading",
+  "version": "0.0.1",
+  "description": "A Raycast extension for trading",
+  "type": "module",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@10.33.2",
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
+  "devDependencies": {
+    "@typescript/native-preview": "latest"
+  }
+}
