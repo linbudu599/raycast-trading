@@ -22,6 +22,29 @@ export interface MarketSnapshot {
   sections: readonly MarketQuoteSection[];
 }
 
+export interface MarketTrendSummary {
+  label: string;
+  changePercent: number;
+  note: string;
+}
+
+export interface ExtendedSessionTrend {
+  session: Extract<TradingSession, "盘前" | "盘后">;
+  value: number;
+  changePercent: number;
+  note: string;
+}
+
+export interface MarketQuoteDetail {
+  quote: MarketQuote;
+  queriedAt: Date;
+  session: TradingSession;
+  yesterday: MarketTrendSummary;
+  oneMonth: MarketTrendSummary;
+  yearToDate: MarketTrendSummary;
+  extendedSession: ExtendedSessionTrend | undefined;
+}
+
 export type FundRiskLevel = "低风险" | "中风险" | "中高风险";
 
 export interface FundNavPerformance {
@@ -173,6 +196,89 @@ const MARKET_SECTION_TITLES: Record<MarketQuoteCategory, string> = {
 
 const MARKET_CATEGORY_ORDER: readonly MarketQuoteCategory[] = ["US Index", "Metals", "Crypto", "HK Index", "CN Index"];
 
+const MARKET_DETAIL_MOCKS: Record<
+  string,
+  Pick<MarketQuoteDetail, "extendedSession" | "oneMonth" | "session" | "yearToDate" | "yesterday">
+> = {
+  "BTC/USDT": {
+    extendedSession: undefined,
+    oneMonth: { label: "近一个月走势", changePercent: 8.42, note: "现货资金持续流入，波动放大。" },
+    session: "夜盘",
+    yearToDate: { label: "今年来走势", changePercent: 51.68, note: "风险偏好回升推动主要加密资产上行。" },
+    yesterday: { label: "昨日走势", changePercent: -1.12, note: "昨日冲高回落，短线承压。" },
+  },
+  CHINEXT: {
+    extendedSession: undefined,
+    oneMonth: { label: "近一个月走势", changePercent: 3.28, note: "成长风格逐步修复。" },
+    session: "盘中",
+    yearToDate: { label: "今年来走势", changePercent: -2.14, note: "年内仍处震荡修复区间。" },
+    yesterday: { label: "昨日走势", changePercent: 0.66, note: "昨日尾盘资金回流。" },
+  },
+  CSI300: {
+    extendedSession: undefined,
+    oneMonth: { label: "近一个月走势", changePercent: 2.47, note: "权重板块温和走强。" },
+    session: "盘中",
+    yearToDate: { label: "今年来走势", changePercent: 5.36, note: "低估值板块支撑指数。" },
+    yesterday: { label: "昨日走势", changePercent: 0.31, note: "昨日窄幅震荡收涨。" },
+  },
+  "ETH/USDT": {
+    extendedSession: undefined,
+    oneMonth: { label: "近一个月走势", changePercent: 6.93, note: "生态活跃度带动估值修复。" },
+    session: "夜盘",
+    yearToDate: { label: "今年来走势", changePercent: 34.21, note: "年内整体强于多数风险资产。" },
+    yesterday: { label: "昨日走势", changePercent: 0.48, note: "昨日震荡走高。" },
+  },
+  HSI: {
+    extendedSession: undefined,
+    oneMonth: { label: "近一个月走势", changePercent: 4.05, note: "互联网与地产链带来弹性。" },
+    session: "盘中",
+    yearToDate: { label: "今年来走势", changePercent: 7.84, note: "估值修复仍是主线。" },
+    yesterday: { label: "昨日走势", changePercent: -0.52, note: "昨日高开低走。" },
+  },
+  HSTECH: {
+    extendedSession: undefined,
+    oneMonth: { label: "近一个月走势", changePercent: 5.76, note: "科技龙头反弹贡献明显。" },
+    session: "盘中",
+    yearToDate: { label: "今年来走势", changePercent: 4.92, note: "年内波动仍高于主板指数。" },
+    yesterday: { label: "昨日走势", changePercent: -0.81, note: "昨日跟随外盘回调。" },
+  },
+  NDX: {
+    extendedSession: { session: "盘前", value: 17942.36, changePercent: 0.26, note: "大型科技股盘前小幅走强。" },
+    oneMonth: { label: "近一个月走势", changePercent: 4.78, note: "AI 与半导体权重继续贡献主要涨幅。" },
+    session: "盘前",
+    yearToDate: { label: "今年来走势", changePercent: 12.64, note: "今年以来维持上行趋势。" },
+    yesterday: { label: "昨日走势", changePercent: 0.72, note: "昨日尾盘拉升，收于日内高位附近。" },
+  },
+  "SOL/USDT": {
+    extendedSession: undefined,
+    oneMonth: { label: "近一个月走势", changePercent: 12.36, note: "高 beta 属性带来更大弹性。" },
+    session: "夜盘",
+    yearToDate: { label: "今年来走势", changePercent: 28.57, note: "链上交易活跃度支撑表现。" },
+    yesterday: { label: "昨日走势", changePercent: 2.15, note: "昨日强势突破短期压力。" },
+  },
+  SPX: {
+    extendedSession: { session: "盘后", value: 5128.74, changePercent: -0.11, note: "盘后期指小幅回落。" },
+    oneMonth: { label: "近一个月走势", changePercent: 2.16, note: "大盘股维持温和上行。" },
+    session: "盘后",
+    yearToDate: { label: "今年来走势", changePercent: 8.42, note: "盈利预期改善支撑指数。" },
+    yesterday: { label: "昨日走势", changePercent: 0.34, note: "昨日震荡收涨。" },
+  },
+  SSE: {
+    extendedSession: undefined,
+    oneMonth: { label: "近一个月走势", changePercent: 1.48, note: "指数延续箱体震荡。" },
+    session: "盘中",
+    yearToDate: { label: "今年来走势", changePercent: 3.62, note: "政策预期提供下方支撑。" },
+    yesterday: { label: "昨日走势", changePercent: -0.18, note: "昨日量能略有收缩。" },
+  },
+  XAU: {
+    extendedSession: undefined,
+    oneMonth: { label: "近一个月走势", changePercent: 3.89, note: "避险需求与降息预期支撑金价。" },
+    session: "夜盘",
+    yearToDate: { label: "今年来走势", changePercent: 14.32, note: "今年以来维持高位趋势。" },
+    yesterday: { label: "昨日走势", changePercent: -0.22, note: "昨日美元走强压制金价。" },
+  },
+};
+
 const WATCH_FUNDS: readonly Omit<FundNavPerformance, "updatedAt">[] = [
   {
     code: "110022",
@@ -281,6 +387,21 @@ export const fetchMarketSnapshot = () =>
       items: MARKET_QUOTES.filter((quote) => quote.category === category),
     })),
   });
+
+export const fetchMarketQuoteDetail = (symbol: string) => {
+  const quote = MARKET_QUOTES.find((item) => item.symbol === symbol);
+  const detail = MARKET_DETAIL_MOCKS[symbol];
+
+  return resolveMock<MarketQuoteDetail | undefined>(
+    quote && detail
+      ? {
+          ...detail,
+          quote,
+          queriedAt: new Date(),
+        }
+      : undefined,
+  );
+};
 
 export const fetchWatchFunds = () => {
   const queriedAt = new Date();

@@ -1,4 +1,4 @@
-import type { MarketQuote, StockQuote } from "./mock-api";
+import type { MarketQuote, MarketQuoteDetail, MarketTrendSummary, StockQuote } from "./mock-api";
 
 export interface WatchlistItem {
   symbol: string;
@@ -89,6 +89,34 @@ export const formatMarketQuoteValue = ({ unit, value }: Pick<MarketQuote, "unit"
 
   return `${decimalFormatter.format(value)} pts`;
 };
+
+const formatTrendLine = ({ changePercent, label, note }: MarketTrendSummary) =>
+  `- ${label}: ${formatPercent(changePercent)} (${note})`;
+
+export const formatMarketDetailMarkdown = (detail: MarketQuoteDetail) =>
+  [
+    `# ${detail.quote.name}`,
+    "",
+    `- 标的代码: ${detail.quote.symbol}`,
+    `- 最新报价: ${formatMarketQuoteValue(detail.quote)}`,
+    `- 当前状态: ${detail.session}`,
+    `- 查询时间: ${formatQueryTime(detail.queriedAt)}`,
+    "",
+    "## 核心走势",
+    formatTrendLine(detail.yesterday),
+    formatTrendLine(detail.oneMonth),
+    formatTrendLine(detail.yearToDate),
+    ...(detail.extendedSession
+      ? [
+          "",
+          "## 美股扩展时段",
+          `- ${detail.extendedSession.session}: ${formatMarketQuoteValue({
+            unit: detail.quote.unit,
+            value: detail.extendedSession.value,
+          })} / ${formatPercent(detail.extendedSession.changePercent)} (${detail.extendedSession.note})`,
+        ]
+      : []),
+  ].join("\n");
 
 export const formatFundNav = (value: number) => value.toFixed(4);
 
