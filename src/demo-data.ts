@@ -1,26 +1,4 @@
-export type MarketQuoteCategory = "US Index" | "Metals" | "Crypto" | "HK Index" | "CN Index";
-
-export type MarketQuoteUnit = "points" | "usdPerOunce" | "usdt";
-
-export interface MarketQuote {
-  symbol: string;
-  name: string;
-  category: MarketQuoteCategory;
-  value: number;
-  changePercent: number;
-  unit: MarketQuoteUnit;
-}
-
-export interface MarketQuoteSection {
-  category: MarketQuoteCategory;
-  title: string;
-  items: readonly MarketQuote[];
-}
-
-export interface MarketSnapshot {
-  queriedAt: Date;
-  sections: readonly MarketQuoteSection[];
-}
+import type { MarketQuote, StockQuote } from "./mock-api";
 
 export interface WatchlistItem {
   symbol: string;
@@ -35,130 +13,6 @@ export interface ConfigurableSymbol {
   name: string;
   isTracked: boolean;
 }
-
-export const MARKET_QUOTES: readonly MarketQuote[] = [
-  {
-    symbol: "NDX",
-    name: "纳斯达克 100 指数",
-    category: "US Index",
-    value: 17896.12,
-    changePercent: 0.84,
-    unit: "points",
-  },
-  {
-    symbol: "SPX",
-    name: "标普 500 指数",
-    category: "US Index",
-    value: 5134.28,
-    changePercent: 0.41,
-    unit: "points",
-  },
-  {
-    symbol: "XAU",
-    name: "黄金国际金价",
-    category: "Metals",
-    value: 2328.64,
-    changePercent: -0.18,
-    unit: "usdPerOunce",
-  },
-  {
-    symbol: "BTC/USDT",
-    name: "Bitcoin",
-    category: "Crypto",
-    value: 67240.18,
-    changePercent: -0.36,
-    unit: "usdt",
-  },
-  {
-    symbol: "ETH/USDT",
-    name: "Ethereum",
-    category: "Crypto",
-    value: 3268.52,
-    changePercent: 0.92,
-    unit: "usdt",
-  },
-  {
-    symbol: "SOL/USDT",
-    name: "Solana",
-    category: "Crypto",
-    value: 151.74,
-    changePercent: 1.86,
-    unit: "usdt",
-  },
-  {
-    symbol: "HSI",
-    name: "恒生指数",
-    category: "HK Index",
-    value: 17746.91,
-    changePercent: -0.73,
-    unit: "points",
-  },
-  {
-    symbol: "HSTECH",
-    name: "恒生科技指数",
-    category: "HK Index",
-    value: 3619.42,
-    changePercent: -1.08,
-    unit: "points",
-  },
-  {
-    symbol: "CHINEXT",
-    name: "创业板指数",
-    category: "CN Index",
-    value: 1829.21,
-    changePercent: 0.37,
-    unit: "points",
-  },
-  {
-    symbol: "CSI300",
-    name: "沪深 300 指数",
-    category: "CN Index",
-    value: 3568.07,
-    changePercent: 0.22,
-    unit: "points",
-  },
-  {
-    symbol: "SSE",
-    name: "上证指数",
-    category: "CN Index",
-    value: 3091.28,
-    changePercent: -0.12,
-    unit: "points",
-  },
-];
-
-export const MARKET_QUOTE_SECTIONS: readonly MarketQuoteSection[] = [
-  {
-    category: "US Index",
-    title: "美股指数",
-    items: MARKET_QUOTES.filter((quote) => quote.category === "US Index"),
-  },
-  {
-    category: "Metals",
-    title: "贵金属",
-    items: MARKET_QUOTES.filter((quote) => quote.category === "Metals"),
-  },
-  {
-    category: "Crypto",
-    title: "加密货币",
-    items: MARKET_QUOTES.filter((quote) => quote.category === "Crypto"),
-  },
-  {
-    category: "HK Index",
-    title: "港股指数",
-    items: MARKET_QUOTES.filter((quote) => quote.category === "HK Index"),
-  },
-  {
-    category: "CN Index",
-    title: "A 股指数",
-    items: MARKET_QUOTES.filter((quote) => quote.category === "CN Index"),
-  },
-];
-
-export const getMockMarketSnapshot = (): MarketSnapshot => ({
-  queriedAt: new Date(),
-  sections: MARKET_QUOTE_SECTIONS,
-});
 
 export const WATCHLIST_ITEMS: readonly WatchlistItem[] = [
   {
@@ -228,5 +82,10 @@ export const formatMarketQuoteValue = ({ unit, value }: Pick<MarketQuote, "unit"
 
   return `${decimalFormatter.format(value)} pts`;
 };
+
+export const formatFundNav = (value: number) => value.toFixed(4);
+
+export const formatStockQuoteValue = ({ currency, value }: Pick<StockQuote, "currency" | "value">) =>
+  `${decimalFormatter.format(value)} ${currency}`;
 
 export const formatQueryTime = (value: Date) => queryTimeFormatter.format(value);

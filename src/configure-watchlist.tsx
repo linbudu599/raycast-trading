@@ -1,6 +1,6 @@
 import { List } from "@raycast/api";
 
-import { CONFIGURABLE_SYMBOLS } from "./demo-data";
+import { CONFIGURABLE_SYMBOLS } from "./mock-api";
 
 export default function ConfigureWatchList() {
   return (

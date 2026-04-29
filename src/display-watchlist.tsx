@@ -1,6 +1,7 @@
 import { List } from "@raycast/api";
 
-import { formatCurrency, formatPercent, WATCHLIST_ITEMS } from "./demo-data";
+import { formatCurrency, formatPercent } from "./demo-data";
+import { WATCHLIST_ITEMS } from "./mock-api";
 
 export default function DisplayWatchList() {
   return (

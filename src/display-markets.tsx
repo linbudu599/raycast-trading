@@ -1,14 +1,16 @@
 import { List } from "@raycast/api";
 
-import { formatMarketQuoteValue, formatPercent, formatQueryTime, getMockMarketSnapshot } from "./demo-data";
+import { formatMarketQuoteValue, formatPercent, formatQueryTime } from "./demo-data";
+import { fetchMarketSnapshot } from "./mock-api";
+import { useMockRequest } from "./use-mock-request";
 
 export default function DisplayMarkets() {
-  const snapshot = getMockMarketSnapshot();
-  const queriedAt = formatQueryTime(snapshot.queriedAt);
+  const { data: snapshot, isLoading } = useMockRequest(fetchMarketSnapshot, []);
+  const queriedAt = snapshot ? formatQueryTime(snapshot.queriedAt) : "";
 
   return (
-    <List navigationTitle="Markets Status">
-      {snapshot.sections.map((section) => (
+    <List isLoading={isLoading} navigationTitle="Markets Status">
+      {snapshot?.sections.map((section) => (
         <List.Section key={section.title} title={section.title}>
           {section.items.map((quote) => (
             <List.Item
