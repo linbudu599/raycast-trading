@@ -73,6 +73,15 @@ npm install -g pnpm
 4. If a command does not refresh, close the Raycast command window and open it again. For stateful UI issues, stop `pnpm dev` and start it again.
 5. Check the `pnpm dev` terminal for build errors, runtime exceptions, and Raycast validation messages.
 
+### Assign a local hotkey
+
+Raycast extension manifests do not support shipping default global hotkeys. To bind **Display Markets** to `⌥ S` locally:
+
+1. Open **Raycast Settings**.
+2. Go to **Extensions** and select **Trading**.
+3. Find **Display Markets**.
+4. Set its hotkey to `⌥ S`.
+
 Before publishing, run:
 
 ```bash
