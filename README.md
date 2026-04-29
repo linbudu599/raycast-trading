@@ -6,14 +6,16 @@ A [Raycast](https://www.raycast.com/) extension for trading — view market stat
 
 | Command | Description |
 |---|---|
-| **Display Markets** | Shows a panel with the current Markets Status |
+| **Display Markets** | Shows market quotes and drill-down details |
 | **Display Watch List** | Shows your personal watch list |
+| **Display Watch Funds** | Shows watched Mainland China fund NAV performance |
+| **Search Stock** | Searches mock stock quotes with trading session status |
 | **Configure Watch List** | Add or remove symbols from your watch list |
 
 ## Prerequisites
 
 - [Raycast](https://www.raycast.com/) installed on macOS
-- [Node.js](https://nodejs.org/) ≥ 18
+- [Node.js](https://nodejs.org/) ≥ 22
 - [pnpm](https://pnpm.io/) ≥ 10
 
 Install pnpm if needed:
@@ -51,6 +53,8 @@ npm install -g pnpm
 2. Search for one of the commands:
    - **Display Markets**
    - **Display Watch List**
+   - **Display Watch Funds**
+   - **Search Stock**
    - **Configure Watch List**
 3. Press `↵` to run the selected command.
 
@@ -63,6 +67,14 @@ pnpm build
 ```
 
 This compiles the extension into the `dist/` folder and makes it ready for submission to the [Raycast Store](https://www.raycast.com/store).
+
+## Publish
+
+```bash
+pnpm release
+```
+
+This runs `ray publish`.
 
 ## Development notes
 
