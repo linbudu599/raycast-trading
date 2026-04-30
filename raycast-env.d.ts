@@ -8,6 +8,8 @@
 /* eslint-disable @typescript-eslint/ban-types */
 
 type ExtensionPreferences = {
+  /** Language - Choose the display language for the extension. */
+  "language": "en" | "zh-CN",
   /** Change Color Style - Choose how market gains and losses are highlighted. */
   "changeColorStyle": "green-up-red-down" | "red-up-green-down"
 }

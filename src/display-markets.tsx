@@ -2,6 +2,7 @@ import { Action, ActionPanel, Color, Detail, getPreferenceValues, Icon, List } f
 import { useCallback } from "react";
 
 import { formatMarketDetailMarkdown, formatMarketQuoteValue, formatPercent, formatQueryTime } from "./lib/demo-data";
+import { getLanguage, t, translateMarketCategory, translateMarketName, translateSession } from "./lib/i18n";
 import { fetchMarketQuoteDetail, fetchMarketSnapshot } from "./lib/longbridge-api";
 import type { MarketQuoteSection, TradingSession } from "./lib/mock-api";
 import { useMockRequest } from "./lib/use-mock-request";
@@ -53,27 +54,35 @@ const getSectionSubtitle = (section: MarketQuoteSection) => {
 };
 
 function MarketDetail({ symbol }: MarketDetailProps) {
+  const language = getLanguage();
   const requestDetail = useCallback(() => fetchMarketQuoteDetail(symbol), [symbol]);
   const { data: detail, error, isLoading } = useMockRequest(requestDetail, [requestDetail]);
 
   const markdown = (() => {
     if (error) {
-      return `# Failed to load market detail\n\n${error.message}`;
+      return `# ${t("failedToLoadMarketDetail", language)}\n\n${error.message}`;
     }
 
     if (detail) {
-      return formatMarketDetailMarkdown(detail);
+      return formatMarketDetailMarkdown(detail, language);
     }
 
     return isLoading
-      ? "Loading market detail..."
-      : `# Market detail not found\n\nNo Longbridge quote found for ${symbol}.`;
+      ? `${t("loadMarketsTitle", language)}...`
+      : `# ${t("marketDetailNotFound", language)}\n\n${t("marketDetailNotFoundDescription", language)} ${symbol}.`;
   })();
 
-  return <Detail isLoading={isLoading} markdown={markdown} navigationTitle={detail?.quote.name ?? symbol} />;
+  return (
+    <Detail
+      isLoading={isLoading}
+      markdown={markdown}
+      navigationTitle={detail ? translateMarketName(detail.quote.symbol, detail.quote.name, language) : symbol}
+    />
+  );
 }
 
 export default function DisplayMarkets() {
+  const language = getLanguage();
   const preferences = getPreferenceValues<DisplayMarketsPreferences>();
   const { data: snapshot, error, isLoading } = useMockRequest(fetchMarketSnapshot, []);
   const queriedAt = snapshot ? formatQueryTime(snapshot.queriedAt) : "";
@@ -83,47 +92,58 @@ export default function DisplayMarkets() {
       .sort((section, nextSection) => getSectionPriority(section) - getSectionPriority(nextSection)) ?? [];
 
   return (
-    <List isLoading={isLoading} navigationTitle="Markets Status">
+    <List isLoading={isLoading} navigationTitle={t("marketStatus", language)}>
       {error ? (
-        <List.EmptyView title="Failed to load markets" description={error.message} icon={Icon.ExclamationMark} />
+        <List.EmptyView
+          title={t("failedToLoadMarkets", language)}
+          description={error.message}
+          icon={Icon.ExclamationMark}
+        />
       ) : null}
       {isLoading && sections.length === 0 ? (
         <List.EmptyView
-          title="正在查询 Longbridge 行情"
-          description="请稍候，正在批量获取市场报价..."
+          title={t("loadMarketsTitle", language)}
+          description={t("loadMarketsDescription", language)}
           icon={Icon.Clock}
         />
       ) : null}
       {queriedAt ? (
-        <List.Section title="查询时间">
+        <List.Section title={t("queryTime", language)}>
           <List.Item
             title={queriedAt}
-            accessories={isLoading ? [{ icon: Icon.Clock, tooltip: "正在刷新行情" }] : undefined}
+            accessories={isLoading ? [{ icon: Icon.Clock, tooltip: t("loadMarketsTitle", language) }] : undefined}
           />
         </List.Section>
       ) : null}
       {sections.map((section) => (
-        <List.Section key={section.title} title={section.title} subtitle={getSectionSubtitle(section)}>
+        <List.Section
+          key={section.title}
+          title={translateMarketCategory(section.category, language)}
+          subtitle={translateSession(getSectionSubtitle(section), language)}
+        >
           {section.items.map((quote) => {
             return (
               <List.Item
                 key={quote.symbol}
-                title={quote.name}
+                title={translateMarketName(quote.symbol, quote.name, language)}
                 subtitle={quote.symbol}
                 accessories={[
-                  { text: formatMarketQuoteValue(quote), tooltip: "查询值" },
-                  ...(isLoading ? [{ icon: Icon.Clock, tooltip: "正在刷新行情" }] : []),
+                  { text: formatMarketQuoteValue(quote), tooltip: t("priceTooltip", language) },
+                  ...(isLoading ? [{ icon: Icon.Clock, tooltip: t("loadMarketsTitle", language) }] : []),
                   {
                     tag: {
                       color: getChangeColor(quote.changePercent, preferences.changeColorStyle),
                       value: formatPercent(quote.changePercent),
                     },
-                    tooltip: "当日涨跌幅",
+                    tooltip: t("changePercentTooltip", language),
                   },
                 ]}
                 actions={
                   <ActionPanel>
-                    <Action.Push title="View Details" target={<MarketDetail symbol={quote.symbol} />} />
+                    <Action.Push
+                      title={t("watchlistDetail", language)}
+                      target={<MarketDetail symbol={quote.symbol} />}
+                    />
                   </ActionPanel>
                 }
               />

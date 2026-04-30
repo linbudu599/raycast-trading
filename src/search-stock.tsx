@@ -2,10 +2,12 @@ import { List } from "@raycast/api";
 import { useCallback, useState } from "react";
 
 import { formatPercent, formatQueryTime, formatStockQuoteValue } from "./lib/demo-data";
+import { getLanguage, t, translateSession } from "./lib/i18n";
 import { searchStockQuotes } from "./lib/mock-api";
 import { useMockRequest } from "./lib/use-mock-request";
 
 export default function SearchStock() {
+  const language = getLanguage();
   const [searchText, setSearchText] = useState("");
   const requestQuotes = useCallback(() => searchStockQuotes(searchText), [searchText]);
   const result = useMockRequest(requestQuotes, [requestQuotes]);
@@ -15,28 +17,31 @@ export default function SearchStock() {
   return (
     <List
       isLoading={result.isLoading}
-      navigationTitle="Search Stock"
+      navigationTitle={t("searchStock", language)}
       onSearchTextChange={setSearchText}
-      searchBarPlaceholder="Search symbol, name, or market"
+      searchBarPlaceholder={t("searchPlaceholder", language)}
       throttle
     >
       {result.error ? (
-        <List.EmptyView title="Failed to search stock quotes" description={result.error.message} />
+        <List.EmptyView title={t("failedToSearchStocks", language)} description={result.error.message} />
       ) : null}
       {items.length === 0 && !result.isLoading && !result.error ? (
-        <List.EmptyView title="No stock quotes found" description="Try another symbol, name, or market." />
+        <List.EmptyView
+          title={t("noStockQuotesFound", language)}
+          description={t("noStockQuotesFoundDescription", language)}
+        />
       ) : null}
-      <List.Section title="搜索结果">
+      <List.Section title={t("searchResults", language)}>
         {items.map((quote) => (
           <List.Item
             key={quote.symbol}
             title={quote.name}
             subtitle={quote.symbol}
             accessories={[
-              { text: formatStockQuoteValue(quote), tooltip: "最新报价" },
-              { text: formatPercent(quote.dailyChangePercent), tooltip: "当日涨跌幅" },
-              { text: quote.session, tooltip: "交易状态" },
-              { text: queriedAt, tooltip: "最新查询时间" },
+              { text: formatStockQuoteValue(quote), tooltip: t("latestPrice", language) },
+              { text: formatPercent(quote.dailyChangePercent), tooltip: t("changePercentTooltip", language) },
+              { text: translateSession(quote.session, language), tooltip: t("currentStatus", language) },
+              { text: queriedAt, tooltip: t("latestQueryTime", language) },
             ]}
           />
         ))}

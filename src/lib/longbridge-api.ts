@@ -22,7 +22,7 @@ interface ZonedParts {
   second: number;
 }
 
-interface ResolvedQuote {
+export interface ResolvedQuote {
   quote: MarketQuote;
   queriedAt: Date;
   session: TradingSession;

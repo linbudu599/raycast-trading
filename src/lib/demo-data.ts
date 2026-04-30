@@ -1,4 +1,6 @@
 import type { MarketQuote, MarketQuoteDetail, StockQuote } from "./mock-api";
+import { t, translateMarketName, translateSession } from "./i18n";
+import type { Language } from "./i18n";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -35,27 +37,27 @@ export const formatPercent = (value: number) => `${value > 0 ? "+" : ""}${value.
 export const formatMarketQuoteValue = ({ value }: Pick<MarketQuote, "unit" | "value">) =>
   decimalFormatter.format(value);
 
-const formatTrendLine = ({ changePercent, label }: MarketQuoteDetail["yesterday"]) =>
+const formatTrendLine = (label: string, { changePercent }: MarketQuoteDetail["yesterday"]) =>
   `- ${label}: ${formatPercent(changePercent)}`;
 
-export const formatMarketDetailMarkdown = (detail: MarketQuoteDetail) =>
+export const formatMarketDetailMarkdown = (detail: MarketQuoteDetail, language: Language) =>
   [
-    `# ${detail.quote.name}`,
+    `# ${translateMarketName(detail.quote.symbol, detail.quote.name, language)}`,
     "",
-    `- 标的代码: ${detail.quote.symbol}`,
-    `- 最新报价: ${formatMarketQuoteValue(detail.quote)}`,
-    `- 当前状态: ${detail.session}`,
-    `- 查询时间: ${formatQueryTime(detail.queriedAt)}`,
+    `- ${t("stockSymbol", language)}: ${detail.quote.symbol}`,
+    `- ${t("latestPrice", language)}: ${formatMarketQuoteValue(detail.quote)}`,
+    `- ${t("currentStatus", language)}: ${translateSession(detail.session, language)}`,
+    `- ${t("queryTime", language)}: ${formatQueryTime(detail.queriedAt)}`,
     "",
-    "## 核心走势",
-    formatTrendLine(detail.yesterday),
-    formatTrendLine(detail.oneMonth),
-    formatTrendLine(detail.yearToDate),
+    `## ${t("trendCore", language)}`,
+    formatTrendLine(t("trendToday", language), detail.yesterday),
+    formatTrendLine(t("trendOneMonth", language), detail.oneMonth),
+    formatTrendLine(t("trendYearToDate", language), detail.yearToDate),
     ...(detail.extendedSession
       ? [
           "",
-          "## 美股扩展时段",
-          `- ${detail.extendedSession.session}: ${formatMarketQuoteValue({
+          `## ${t("usExtendedSession", language)}`,
+          `- ${translateSession(detail.extendedSession.session, language)}: ${formatMarketQuoteValue({
             unit: detail.quote.unit,
             value: detail.extendedSession.value,
           })} / ${formatPercent(detail.extendedSession.changePercent)}`,
