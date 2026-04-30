@@ -1,13 +1,18 @@
-import { Action, ActionPanel, Color, Detail, getPreferenceValues, Icon, List } from "@raycast/api";
+import { Action, ActionPanel, Detail, getPreferenceValues, Icon, List } from "@raycast/api";
 import { useCallback } from "react";
 
-import { formatMarketDetailMarkdown, formatMarketQuoteValue, formatPercent, formatQueryTime } from "./lib/demo-data";
+import {
+  formatMarketDetailMarkdown,
+  formatMarketQuoteValue,
+  formatPercent,
+  formatQueryTime,
+  getChangeColor,
+} from "./lib/formatters";
+import type { ChangeColorStyle } from "./lib/formatters";
 import { getLanguage, t, translateMarketCategory, translateMarketName, translateSession } from "./lib/i18n";
 import { fetchMarketQuoteDetail, fetchMarketSnapshot } from "./lib/longbridge-api";
-import type { MarketQuoteSection, TradingSession } from "./lib/mock-api";
-import { useMockRequest } from "./lib/use-mock-request";
-
-type ChangeColorStyle = "green-up-red-down" | "red-up-green-down";
+import type { MarketQuoteSection, TradingSession } from "./lib/market-types";
+import { useAsyncRequest } from "./lib/use-async-request";
 
 interface MarketDetailProps {
   symbol: string;
@@ -17,18 +22,6 @@ interface DisplayMarketsPreferences {
   changeColorStyle: ChangeColorStyle;
   showTradingOnly: boolean;
 }
-
-const getChangeColor = (value: number, style: ChangeColorStyle) => {
-  if (value > 0) {
-    return style === "green-up-red-down" ? Color.Green : Color.Red;
-  }
-
-  if (value < 0) {
-    return style === "green-up-red-down" ? Color.Red : Color.Green;
-  }
-
-  return Color.SecondaryText;
-};
 
 const isTradingSession = (session: TradingSession | undefined) =>
   session === "盘前" || session === "盘中" || session === "盘后" || session === "全天交易";
@@ -56,7 +49,7 @@ const getSectionSubtitle = (section: MarketQuoteSection) => {
 function MarketDetail({ symbol }: MarketDetailProps) {
   const language = getLanguage();
   const requestDetail = useCallback(() => fetchMarketQuoteDetail(symbol), [symbol]);
-  const { data: detail, error, isLoading } = useMockRequest(requestDetail, [requestDetail]);
+  const { data: detail, error, isLoading } = useAsyncRequest(requestDetail, [requestDetail]);
 
   const markdown = (() => {
     if (error) {
@@ -84,7 +77,7 @@ function MarketDetail({ symbol }: MarketDetailProps) {
 export default function DisplayMarkets() {
   const language = getLanguage();
   const preferences = getPreferenceValues<DisplayMarketsPreferences>();
-  const { data: snapshot, error, isLoading } = useMockRequest(fetchMarketSnapshot, []);
+  const { data: snapshot, error, isLoading } = useAsyncRequest(fetchMarketSnapshot, []);
   const queriedAt = snapshot ? formatQueryTime(snapshot.queriedAt) : "";
   const sections =
     snapshot?.sections
@@ -127,6 +120,7 @@ export default function DisplayMarkets() {
                 key={quote.symbol}
                 title={translateMarketName(quote.symbol, quote.name, language)}
                 subtitle={quote.symbol}
+                keywords={[quote.symbol, quote.name, quote.category]}
                 accessories={[
                   { text: formatMarketQuoteValue(quote), tooltip: t("priceTooltip", language) },
                   ...(isLoading ? [{ icon: Icon.Clock, tooltip: t("loadMarketsTitle", language) }] : []),

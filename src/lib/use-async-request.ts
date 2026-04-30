@@ -6,7 +6,7 @@ interface RequestState<TData> {
   isLoading: boolean;
 }
 
-export const useMockRequest = <TData>(request: () => Promise<TData>, dependencies: readonly unknown[] = []) => {
+export const useAsyncRequest = <TData>(request: () => Promise<TData>, dependencies: readonly unknown[] = []) => {
   const [state, setState] = useState<RequestState<TData>>({
     data: undefined,
     error: undefined,

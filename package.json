@@ -2,7 +2,7 @@
   "name": "raycast-trading",
   "title": "Raycast Trading",
   "version": "0.0.1",
-  "description": "A Raycast extension for trading — markets status, watch list, and configuration.",
+  "description": "A Raycast extension for market overview, watchlists, quote lookup, and API call inspection.",
   "icon": "extension-icon.png",
   "author": "linbudu599",
   "categories": [
@@ -55,43 +55,43 @@
   "commands": [
     {
       "name": "display-markets",
-      "title": "Display Markets",
-      "description": "Display the current markets status panel.",
+      "title": "Market Overview",
+      "description": "Monitor major global market indexes and cross-asset indicators.",
       "mode": "view",
       "preferences": [
         {
           "name": "showTradingOnly",
           "type": "checkbox",
           "required": false,
-          "title": "Only Show Trading Markets",
+          "title": "Show Active Markets Only",
           "label": "Only show markets that are currently trading",
-          "description": "Only show markets that are currently trading.",
+          "description": "Hide closed market sections from the market overview.",
           "default": false
         }
       ]
     },
     {
       "name": "display-watchlist",
-      "title": "Display Watch List",
-      "description": "Display your personal watch list.",
-      "mode": "view"
-    },
-    {
-      "name": "display-watch-funds",
-      "title": "Display Watch Funds",
-      "description": "Display watched Mainland China fund NAV performance.",
+      "title": "Watchlist",
+      "description": "Track real-time quotes for your saved symbols.",
       "mode": "view"
     },
     {
       "name": "search-stock",
-      "title": "Search Stock",
-      "description": "Search latest stock quotes with trading session status.",
+      "title": "Quote Lookup",
+      "description": "Look up real-time quotes and reference data by symbol.",
       "mode": "view"
     },
     {
       "name": "configure-watchlist",
-      "title": "Configure Watch List",
-      "description": "Add or remove symbols from your watch list.",
+      "title": "Manage Watchlist",
+      "description": "Add, remove, and reorder symbols in your watchlist.",
+      "mode": "view"
+    },
+    {
+      "name": "show-api-call",
+      "title": "API Call Log",
+      "description": "Review persisted Longbridge API request and response logs.",
       "mode": "view"
     }
   ],

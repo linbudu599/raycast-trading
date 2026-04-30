@@ -1,9 +1,10 @@
 import { Cache } from "@raycast/api";
 import { execFile } from "child_process";
 
+import { recordApiCall } from "./api-call-log";
 import { MARKET_CATEGORY_ORDER, MARKET_SECTION_TITLES, MARKET_SYMBOLS } from "./markets";
 import type { MarketQuote, MarketQuoteCategory, MarketQuoteSection, MarketSymbol, TradingSession } from "./markets";
-import type { ExtendedSessionTrend, MarketQuoteDetail, MarketSnapshot, MarketTrendSummary } from "./mock-api";
+import type { ExtendedSessionTrend, MarketQuoteDetail, MarketSnapshot, MarketTrendSummary } from "./market-types";
 
 type ConcreteMarket = "US" | "HK" | "CN";
 
@@ -48,16 +49,87 @@ interface SelectedPrice {
 }
 
 interface LongbridgeCliPrePostQuote {
+  high: string;
   last: string;
+  low: string;
   prev_close: string;
+  timestamp: string;
+  turnover: string;
+  volume: number;
 }
 
 interface LongbridgeCliQuote {
+  high: string;
   symbol: string;
   last: string;
+  low: string;
+  open: string;
   prev_close: string;
   pre_market_quote: LongbridgeCliPrePostQuote | null;
   post_market_quote: LongbridgeCliPrePostQuote | null;
+  status: string;
+  turnover: string;
+  volume: number;
+}
+
+interface LongbridgeCliStaticInfo {
+  bps: string;
+  "circ._shares": string;
+  currency: string;
+  dividend: string;
+  eps: string;
+  eps_ttm: string;
+  exchange: string;
+  lot_size: string;
+  name: string;
+  symbol: string;
+  total_shares: string;
+}
+
+export type StockQuoteMarket = "US" | "HK" | "CN" | "SG" | "Crypto" | "Other";
+
+export interface StockExtendedSessionQuote {
+  changePercent: number;
+  high: number;
+  last: number;
+  low: number;
+  session: Extract<TradingSession, "盘前" | "盘后">;
+  timestamp: string;
+  turnover: number;
+  volume: number;
+}
+
+export interface StockQuote {
+  bps: number | undefined;
+  circulatingShares: number | undefined;
+  currency: string;
+  dailyChangePercent: number;
+  dividend: number | undefined;
+  eps: number | undefined;
+  epsTtm: number | undefined;
+  exchange: string | undefined;
+  high: number;
+  lotSize: number | undefined;
+  low: number;
+  market: StockQuoteMarket;
+  name: string;
+  open: number;
+  postMarketQuote: StockExtendedSessionQuote | undefined;
+  preMarketQuote: StockExtendedSessionQuote | undefined;
+  prevClose: number;
+  queriedAt: Date;
+  session: TradingSession;
+  status: string;
+  symbol: string;
+  totalShares: number | undefined;
+  turnover: number;
+  value: number;
+  volume: number;
+}
+
+export interface StockSearchResult {
+  queriedAt: Date;
+  items: readonly StockQuote[];
 }
 
 const cache = new Cache({ namespace: "longbridge-api" });
@@ -89,6 +161,25 @@ const DETAIL_PLACEHOLDER: Omit<MarketQuoteDetail, "extendedSession" | "queriedAt
     oneMonth: { label: "近一个月走势", changePercent: 0 },
     yearToDate: { label: "今年来走势", changePercent: 0 },
   };
+
+const SEARCH_SYMBOL_HINTS = [
+  { market: "US", name: "Apple", symbol: "AAPL.US" },
+  { market: "US", name: "NVIDIA", symbol: "NVDA.US" },
+  { market: "US", name: "Tesla", symbol: "TSLA.US" },
+  { market: "US", name: "Microsoft", symbol: "MSFT.US" },
+  { market: "US", name: "Amazon", symbol: "AMZN.US" },
+  { market: "US", name: "Alphabet", symbol: "GOOGL.US" },
+  { market: "HK", name: "Tencent", symbol: "700.HK" },
+  { market: "HK", name: "Xiaomi", symbol: "1810.HK" },
+  { market: "HK", name: "Alibaba", symbol: "9988.HK" },
+  { market: "CN", name: "Kweichow Moutai", symbol: "600519.SH" },
+  { market: "CN", name: "CATL", symbol: "300750.SZ" },
+] as const;
+
+const LONG_BRIDGE_COMMAND_DEDUP_WINDOW_MS = 2_000;
+
+const longbridgeInFlightCalls = new Map<string, Promise<string>>();
+const longbridgeRecentCalls = new Map<string, { expiresAt: number; stdout: string }>();
 
 const getCacheKey = (symbol: string) => `market-quote:${symbol}`;
 
@@ -241,16 +332,30 @@ const getCategorySession = (category: MarketQuoteCategory, date: Date): TradingS
 };
 
 const calculateChangePercent = (value: number, prevClose: number) => {
-  if (prevClose === 0) {
+  if (!Number.isFinite(value) || !Number.isFinite(prevClose) || prevClose === 0) {
     return 0;
   }
 
   return ((value - prevClose) / prevClose) * 100;
 };
 
-const parseQuoteNumber = (value: string) => Number(value);
+const parseQuoteNumber = (value: string) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const parseOptionalQuoteNumber = (value: string | undefined) => {
+  if (value === undefined || value === "") {
+    return undefined;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === "object";
+
+const includesQuery = (value: string, query: string) => value.toLocaleLowerCase().includes(query.toLocaleLowerCase());
 
 const isTradingSessionValue = (value: unknown): value is TradingSession =>
   value === "盘前" || value === "盘中" || value === "盘后" || value === "全天交易" || value === "休市";
@@ -392,7 +497,15 @@ const isLongbridgeCliPrePostQuote = (value: unknown): value is LongbridgeCliPreP
     return false;
   }
 
-  return typeof value.last === "string" && typeof value.prev_close === "string";
+  return (
+    typeof value.high === "string" &&
+    typeof value.last === "string" &&
+    typeof value.low === "string" &&
+    typeof value.prev_close === "string" &&
+    typeof value.timestamp === "string" &&
+    typeof value.turnover === "string" &&
+    typeof value.volume === "number"
+  );
 };
 
 const isLongbridgeCliQuote = (value: unknown): value is LongbridgeCliQuote => {
@@ -401,16 +514,46 @@ const isLongbridgeCliQuote = (value: unknown): value is LongbridgeCliQuote => {
   }
 
   return (
+    typeof value.high === "string" &&
     typeof value.symbol === "string" &&
     typeof value.last === "string" &&
+    typeof value.low === "string" &&
+    typeof value.open === "string" &&
     typeof value.prev_close === "string" &&
     (value.pre_market_quote === null || isLongbridgeCliPrePostQuote(value.pre_market_quote)) &&
-    (value.post_market_quote === null || isLongbridgeCliPrePostQuote(value.post_market_quote))
+    (value.post_market_quote === null || isLongbridgeCliPrePostQuote(value.post_market_quote)) &&
+    typeof value.status === "string" &&
+    typeof value.turnover === "string" &&
+    typeof value.volume === "number"
   );
 };
 
-const execFileAsync = (file: string, args: readonly string[]) =>
+const isLongbridgeCliStaticInfo = (value: unknown): value is LongbridgeCliStaticInfo => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.bps === "string" &&
+    typeof value["circ._shares"] === "string" &&
+    typeof value.currency === "string" &&
+    typeof value.dividend === "string" &&
+    typeof value.eps === "string" &&
+    typeof value.eps_ttm === "string" &&
+    typeof value.exchange === "string" &&
+    typeof value.lot_size === "string" &&
+    typeof value.name === "string" &&
+    typeof value.symbol === "string" &&
+    typeof value.total_shares === "string"
+  );
+};
+
+const getCommandKey = (file: string, args: readonly string[]) => JSON.stringify([file, ...args]);
+
+const execFileOnceAsync = (file: string, args: readonly string[]) =>
   new Promise<string>((resolve, reject) => {
+    const startedAt = new Date();
+
     execFile(
       file,
       [...args],
@@ -421,6 +564,20 @@ const execFileAsync = (file: string, args: readonly string[]) =>
         },
       },
       (error, stdout, stderr) => {
+        if (file === "longbridge") {
+          void recordApiCall({
+            args,
+            command: file,
+            durationMs: Date.now() - startedAt.getTime(),
+            errorMessage: error ? stderr.trim() || error.message : undefined,
+            startedAt,
+            status: error ? "failure" : "success",
+            stderr: stderr.trim() || undefined,
+            stdout,
+            stdoutBytes: Buffer.byteLength(stdout),
+          });
+        }
+
         if (error) {
           reject(new Error(stderr.trim() || error.message));
           return;
@@ -430,6 +587,40 @@ const execFileAsync = (file: string, args: readonly string[]) =>
       },
     );
   });
+
+const execFileAsync = (file: string, args: readonly string[]) => {
+  if (file !== "longbridge") {
+    return execFileOnceAsync(file, args);
+  }
+
+  const key = getCommandKey(file, args);
+  const recentCall = longbridgeRecentCalls.get(key);
+
+  if (recentCall && recentCall.expiresAt > Date.now()) {
+    return Promise.resolve(recentCall.stdout);
+  }
+
+  const inFlightCall = longbridgeInFlightCalls.get(key);
+
+  if (inFlightCall) {
+    return inFlightCall;
+  }
+
+  const call = execFileOnceAsync(file, args)
+    .then((stdout) => {
+      longbridgeRecentCalls.set(key, {
+        expiresAt: Date.now() + LONG_BRIDGE_COMMAND_DEDUP_WINDOW_MS,
+        stdout,
+      });
+      return stdout;
+    })
+    .finally(() => {
+      longbridgeInFlightCalls.delete(key);
+    });
+
+  longbridgeInFlightCalls.set(key, call);
+  return call;
+};
 
 const fetchCliQuotes = async (symbols: readonly string[]): Promise<readonly LongbridgeCliQuote[]> => {
   if (symbols.length === 0) {
@@ -444,6 +635,21 @@ const fetchCliQuotes = async (symbols: readonly string[]): Promise<readonly Long
   }
 
   return parsed.filter(isLongbridgeCliQuote);
+};
+
+const fetchCliStaticInfos = async (symbols: readonly string[]): Promise<readonly LongbridgeCliStaticInfo[]> => {
+  if (symbols.length === 0) {
+    return [];
+  }
+
+  const output = await execFileAsync("longbridge", ["static", ...symbols, "--format", "json"]);
+  const parsed: unknown = JSON.parse(output.trim() || "[]");
+
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed.filter(isLongbridgeCliStaticInfo);
 };
 
 const resolveQuote = (market: MarketSymbol, quote: LongbridgeCliQuote, now: Date): ResolvedQuote => {
@@ -477,6 +683,133 @@ const buildSections = (quotes: readonly MarketQuote[], now: Date): readonly Mark
     session: getCategorySession(category, now),
     title: MARKET_SECTION_TITLES[category],
   }));
+
+const getStockQuoteMarket = (symbol: string): StockQuoteMarket => {
+  if (symbol.endsWith(".US")) {
+    return "US";
+  }
+
+  if (symbol.endsWith(".HK")) {
+    return "HK";
+  }
+
+  if (symbol.endsWith(".SH") || symbol.endsWith(".SZ")) {
+    return "CN";
+  }
+
+  if (symbol.endsWith(".SG")) {
+    return "SG";
+  }
+
+  if (symbol.endsWith(".HAS")) {
+    return "Crypto";
+  }
+
+  return "Other";
+};
+
+const getStockSession = (symbol: string, now: Date): TradingSession => {
+  const concreteMarket = getConcreteMarket(symbol);
+  return concreteMarket ? getSessionFromWindows(now, concreteMarket) : "休市";
+};
+
+const normalizeSearchQuery = (query: string) => query.trim().toUpperCase();
+
+const getSymbolCandidates = (query: string): readonly string[] => {
+  if (!query) {
+    return [];
+  }
+
+  const hintedSymbols = SEARCH_SYMBOL_HINTS.filter(
+    (item) => includesQuery(item.symbol, query) || includesQuery(item.name, query) || includesQuery(item.market, query),
+  ).map((item) => item.symbol);
+
+  if (query.includes(".")) {
+    return [...new Set([query, ...hintedSymbols])];
+  }
+
+  const inferredSymbols: string[] = [];
+
+  if (/^[A-Z]+$/.test(query)) {
+    inferredSymbols.push(`${query}.US`);
+  }
+
+  if (/^\d{1,5}$/.test(query)) {
+    inferredSymbols.push(`${Number(query)}.HK`);
+  }
+
+  if (/^\d{6}$/.test(query)) {
+    if (query.startsWith("6")) {
+      inferredSymbols.push(`${query}.SH`);
+    } else if (query.startsWith("0") || query.startsWith("3")) {
+      inferredSymbols.push(`${query}.SZ`);
+    } else {
+      inferredSymbols.push(`${query}.SH`, `${query}.SZ`);
+    }
+  }
+
+  return [...new Set([...hintedSymbols, ...inferredSymbols])];
+};
+
+const toStockExtendedSessionQuote = (
+  session: Extract<TradingSession, "盘前" | "盘后">,
+  quote: LongbridgeCliPrePostQuote | null,
+): StockExtendedSessionQuote | undefined => {
+  if (!quote) {
+    return undefined;
+  }
+
+  const last = parseQuoteNumber(quote.last);
+  const prevClose = parseQuoteNumber(quote.prev_close);
+
+  return {
+    changePercent: calculateChangePercent(last, prevClose),
+    high: parseQuoteNumber(quote.high),
+    last,
+    low: parseQuoteNumber(quote.low),
+    session,
+    timestamp: quote.timestamp,
+    turnover: parseQuoteNumber(quote.turnover),
+    volume: quote.volume,
+  };
+};
+
+const toStockQuote = (
+  quote: LongbridgeCliQuote,
+  staticInfo: LongbridgeCliStaticInfo | undefined,
+  now: Date,
+): StockQuote => {
+  const value = parseQuoteNumber(quote.last);
+  const prevClose = parseQuoteNumber(quote.prev_close);
+
+  return {
+    bps: parseOptionalQuoteNumber(staticInfo?.bps),
+    circulatingShares: parseOptionalQuoteNumber(staticInfo?.["circ._shares"]),
+    currency: staticInfo?.currency ?? "",
+    dailyChangePercent: calculateChangePercent(value, prevClose),
+    dividend: parseOptionalQuoteNumber(staticInfo?.dividend),
+    eps: parseOptionalQuoteNumber(staticInfo?.eps),
+    epsTtm: parseOptionalQuoteNumber(staticInfo?.eps_ttm),
+    exchange: staticInfo?.exchange,
+    high: parseQuoteNumber(quote.high),
+    lotSize: parseOptionalQuoteNumber(staticInfo?.lot_size),
+    low: parseQuoteNumber(quote.low),
+    market: getStockQuoteMarket(quote.symbol),
+    name: staticInfo?.name ?? quote.symbol,
+    open: parseQuoteNumber(quote.open),
+    postMarketQuote: toStockExtendedSessionQuote("盘后", quote.post_market_quote),
+    preMarketQuote: toStockExtendedSessionQuote("盘前", quote.pre_market_quote),
+    prevClose,
+    queriedAt: now,
+    session: getStockSession(quote.symbol, now),
+    status: quote.status,
+    symbol: quote.symbol,
+    totalShares: parseOptionalQuoteNumber(staticInfo?.total_shares),
+    turnover: parseQuoteNumber(quote.turnover),
+    value,
+    volume: quote.volume,
+  };
+};
 
 export const fetchLongbridgeQuotes = async (
   symbols: readonly MarketSymbol[] = MARKET_SYMBOLS,
@@ -549,5 +882,17 @@ export const fetchMarketQuoteDetail = async (symbol: string): Promise<MarketQuot
     quote: resolvedQuote.quote,
     session: resolvedQuote.session,
     yesterday,
+  };
+};
+
+export const searchStockQuotes = async (query: string): Promise<StockSearchResult> => {
+  const queriedAt = new Date();
+  const symbols = getSymbolCandidates(normalizeSearchQuery(query));
+  const [quotes, staticInfos] = await Promise.all([fetchCliQuotes(symbols), fetchCliStaticInfos(symbols)]);
+  const staticInfoBySymbol = new Map(staticInfos.map((info) => [info.symbol, info]));
+
+  return {
+    queriedAt,
+    items: quotes.map((quote) => toStockQuote(quote, staticInfoBySymbol.get(quote.symbol), queriedAt)),
   };
 };

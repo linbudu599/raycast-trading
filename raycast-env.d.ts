@@ -20,17 +20,17 @@ declare type Preferences = ExtensionPreferences
 declare namespace Preferences {
   /** Preferences accessible in the `display-markets` command */
   export type DisplayMarkets = ExtensionPreferences & {
-  /** Only Show Trading Markets - Only show markets that are currently trading. */
+  /** Show Active Markets Only - Hide closed market sections from the market overview. */
   "showTradingOnly": boolean
 }
   /** Preferences accessible in the `display-watchlist` command */
   export type DisplayWatchlist = ExtensionPreferences & {}
-  /** Preferences accessible in the `display-watch-funds` command */
-  export type DisplayWatchFunds = ExtensionPreferences & {}
   /** Preferences accessible in the `search-stock` command */
   export type SearchStock = ExtensionPreferences & {}
   /** Preferences accessible in the `configure-watchlist` command */
   export type ConfigureWatchlist = ExtensionPreferences & {}
+  /** Preferences accessible in the `show-api-call` command */
+  export type ShowApiCall = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -38,11 +38,11 @@ declare namespace Arguments {
   export type DisplayMarkets = {}
   /** Arguments passed to the `display-watchlist` command */
   export type DisplayWatchlist = {}
-  /** Arguments passed to the `display-watch-funds` command */
-  export type DisplayWatchFunds = {}
   /** Arguments passed to the `search-stock` command */
   export type SearchStock = {}
   /** Arguments passed to the `configure-watchlist` command */
   export type ConfigureWatchlist = {}
+  /** Arguments passed to the `show-api-call` command */
+  export type ShowApiCall = {}
 }
 

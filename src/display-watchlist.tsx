@@ -1,41 +1,39 @@
-import { Action, ActionPanel, Color, Detail, Icon, List } from "@raycast/api";
+import { Action, ActionPanel, Detail, Icon, List } from "@raycast/api";
 import { useCallback } from "react";
 
-import { formatMarketQuoteValue, formatPercent, formatQueryTime } from "./lib/demo-data";
-import { getLanguage, t, translateSession, translateWatchlistCategory } from "./lib/i18n";
-import { useMockRequest } from "./lib/use-mock-request";
+import {
+  formatDetailLine,
+  formatMarketQuoteValue,
+  formatPercent,
+  formatQueryTime,
+  formatSession,
+  getChangeColor,
+} from "./lib/formatters";
+import { getLanguage, t, translateWatchlistCategory } from "./lib/i18n";
+import { useAsyncRequest } from "./lib/use-async-request";
 import { fetchWatchlistSnapshot, getWatchlistDisplayName } from "./lib/watchlist";
 import type { WatchlistQuote } from "./lib/watchlist";
-
-const getChangeColor = (value: number) => {
-  if (value > 0) {
-    return Color.Green;
-  }
-
-  if (value < 0) {
-    return Color.Red;
-  }
-
-  return Color.SecondaryText;
-};
 
 const formatWatchlistDetailMarkdown = (quote: WatchlistQuote, language: ReturnType<typeof getLanguage>) =>
   [
     `# ${getWatchlistDisplayName(quote, language)}`,
     "",
-    `- ${t("stockSymbol", language)}: ${quote.symbol}`,
-    `- ${t("latestPrice", language)}: ${formatMarketQuoteValue(quote)}`,
-    `- ${t("changePercentTooltip", language)}: ${formatPercent(quote.changePercent)}`,
-    `- ${t("currentStatus", language)}: ${translateSession(quote.session, language)}`,
-    `- ${t("latestQueryTime", language)}: ${formatQueryTime(quote.queriedAt)}`,
+    formatDetailLine(t("stockSymbol", language), quote.symbol),
+    formatDetailLine(t("latestPrice", language), formatMarketQuoteValue(quote)),
+    formatDetailLine(t("changePercentTooltip", language), formatPercent(quote.changePercent)),
+    formatDetailLine(t("currentStatus", language), formatSession(quote.session, language)),
+    formatDetailLine(t("latestQueryTime", language), formatQueryTime(quote.queriedAt)),
     ...(quote.extendedSession
       ? [
           "",
           `## ${t("usExtendedSession", language)}`,
-          `- ${translateSession(quote.extendedSession.session, language)}: ${formatMarketQuoteValue({
-            unit: quote.unit,
-            value: quote.extendedSession.value,
-          })} / ${formatPercent(quote.extendedSession.changePercent)}`,
+          formatDetailLine(
+            formatSession(quote.extendedSession.session, language),
+            `${formatMarketQuoteValue({
+              unit: quote.unit,
+              value: quote.extendedSession.value,
+            })} / ${formatPercent(quote.extendedSession.changePercent)}`,
+          ),
         ]
       : []),
   ].join("\n");
@@ -58,7 +56,7 @@ function WatchlistDetail({ quote }: WatchlistDetailProps) {
 export default function DisplayWatchList() {
   const language = getLanguage();
   const requestSnapshot = useCallback(() => fetchWatchlistSnapshot(language), [language]);
-  const { data: snapshot, error, isLoading } = useMockRequest(requestSnapshot, [requestSnapshot]);
+  const { data: snapshot, error, isLoading } = useAsyncRequest(requestSnapshot, [requestSnapshot]);
   const queriedAt = snapshot ? formatQueryTime(snapshot.queriedAt) : "";
   const sections = snapshot?.sections ?? [];
 
@@ -97,6 +95,7 @@ export default function DisplayWatchList() {
               key={quote.symbol}
               title={getWatchlistDisplayName(quote, language)}
               subtitle={quote.symbol}
+              keywords={[quote.symbol, quote.name, quote.category]}
               accessories={[
                 { text: formatMarketQuoteValue(quote), tooltip: t("priceTooltip", language) },
                 {
@@ -106,7 +105,7 @@ export default function DisplayWatchList() {
                   },
                   tooltip: t("changePercentTooltip", language),
                 },
-                { text: translateSession(quote.session, language), tooltip: t("currentStatus", language) },
+                { text: formatSession(quote.session, language), tooltip: t("currentStatus", language) },
               ]}
               actions={
                 <ActionPanel>

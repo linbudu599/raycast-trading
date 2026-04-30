@@ -2,7 +2,7 @@ import { LocalStorage } from "@raycast/api";
 
 import { fetchLongbridgeQuotes } from "./longbridge-api";
 import type { Language } from "./i18n";
-import type { ExtendedSessionTrend, MarketQuoteUnit, TradingSession } from "./mock-api";
+import type { ExtendedSessionTrend, MarketQuoteUnit, TradingSession } from "./market-types";
 import type { MarketQuoteCategory, MarketSymbol } from "./markets";
 
 export type WatchlistCategory = "US Stocks" | "HK Stocks" | "A Shares" | "Other";
