@@ -1,90 +1,78 @@
-# raycast-trading
+# Raycast Trading
 
-A [Raycast](https://www.raycast.com/) extension for trading — view market status, manage your watch list, and configure tracked symbols.
+A [Raycast](https://www.raycast.com/) extension for market overview, watchlists, quote lookup, and Longbridge API call inspection.
+
+The extension fetches live market data through the [Longbridge CLI](https://open.longbridge.com/) and presents it in Raycast with bilingual UI support.
+
+## Features
+
+- **Market Overview**: monitor major US, Hong Kong, China A-share, commodity, and crypto-related market indicators.
+- **Watchlist**: track real-time quotes for saved symbols, grouped by market.
+- **Quote Lookup**: look up live quotes and reference data by symbol, company name, or market.
+- **Manage Watchlist**: add, remove, and reorder watchlist symbols.
+- **API Call Log**: inspect persisted Longbridge request/response logs, including formatted JSON responses.
 
 ## Commands
 
-| Command                  | Description                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------------- |
-| **Display Markets**      | Shows live market quotes (via Longbridge CLI) with session status and drill-down details |
-| **Display Watch List**   | Shows your personal watch list                                                           |
-| **Display Watch Funds**  | Shows watched Mainland China fund NAV performance                                        |
-| **Search Stock**         | Searches stock quotes with trading session status                                        |
-| **Configure Watch List** | Add or remove symbols from your watch list                                               |
+| Command | Description |
+| --- | --- |
+| **Market Overview** | Monitor major global market indexes and cross-asset indicators. |
+| **Watchlist** | Track real-time quotes for your saved symbols. |
+| **Quote Lookup** | Look up real-time quotes and reference data by symbol. |
+| **Manage Watchlist** | Add, remove, and reorder symbols in your watchlist. |
+| **API Call Log** | Review persisted Longbridge API request and response logs. |
 
-## Settings
+## Preferences
 
-### Extension preferences
+| Preference | Scope | Description | Default |
+| --- | --- | --- | --- |
+| **Language** | Extension | Display language: English or Simplified Chinese. | English |
+| **Change Color Style** | Extension | Choose whether gains are green or red. | Green Up / Red Down |
+| **Show Active Markets Only** | Market Overview | Hide closed market sections from the market overview. | Off |
 
-| Preference            | Type     | Description                                          | Default               |
-| --------------------- | -------- | ---------------------------------------------------- | --------------------- |
-| **Change Color Style** | Dropdown | How market gains and losses are highlighted          | Green Up / Red Down   |
+## Longbridge Setup
 
-The **Change Color Style** preference has two options:
-
-- **Green Up / Red Down** — gains shown in green, losses in red (Western convention)
-- **Red Up / Green Down** — gains shown in red, losses in green (East Asian convention)
-
-### Display Markets preferences
-
-| Preference                    | Type     | Description                                   | Default |
-| ----------------------------- | -------- | --------------------------------------------- | ------- |
-| **Only Show Trading Markets** | Checkbox | Hide markets that are not currently in session | Off     |
-
-## Prerequisites
-
-- [Raycast](https://www.raycast.com/) installed on macOS
-- [Node.js](https://nodejs.org/) ≥ 22
-- [pnpm](https://pnpm.io/) ≥ 10
-- [Longbridge CLI](https://open.longportapp.com/docs) — required by the **Display Markets** command to fetch live quotes
-
-Install pnpm if needed:
+This extension shells out to the `longbridge` CLI for live data. Make sure it is installed and authenticated before using quote-related commands.
 
 ```bash
-npm install -g pnpm
+longbridge auth login
+longbridge quote AAPL.US --format json
 ```
 
-## Setup
+Supported symbol examples:
 
-1. **Clone the repository**
+- US stocks: `NVDA.US`, `AAPL.US`
+- Hong Kong stocks: `700.HK`, `1810.HK`
+- China A-shares: `600519.SH`, `300750.SZ`
+- US indexes: `.NDX.US`, `.SPX.US`, `.DJI.US`
 
-   ```bash
-   git clone https://github.com/linbudu599/raycast-trading.git
-   cd raycast-trading
-   ```
+## Development
 
-2. **Install dependencies**
+Prerequisites:
 
-   ```bash
-   pnpm install
-   ```
+- macOS with [Raycast](https://www.raycast.com/) installed
+- Node.js `>=22`
+- pnpm `>=10`
+- Longbridge CLI authenticated locally
 
-3. **Start the development server**
-
-   ```bash
-   pnpm dev
-   ```
-
-   This runs `ray develop`, which compiles the extension and hot-reloads on file changes. Open Raycast (`⌘ Space`) and search for any of the commands above.
-
-> **Tip:** If commands don't appear in Raycast, make sure `pnpm dev` is still running. Check the terminal for build errors or Raycast validation messages.
-
-## Build and publish
+Install dependencies and start the Raycast development server:
 
 ```bash
-# Type-check and lint before building
+pnpm install
+pnpm dev
+```
+
+Useful scripts:
+
+```bash
 pnpm typecheck
 pnpm lint
-
-# Compile into dist/ for Raycast Store submission
 pnpm build
-
-# Publish to the Raycast Store
 pnpm release
 ```
 
-## Development notes
+## Notes
 
-- Source files live in `src/`. Each file matching a `name` in `package.json`'s `commands` array is the entry point for that command.
-- The extension uses [`@raycast/api`](https://developers.raycast.com/api-reference) for all UI primitives.
-- **Display Markets** fetches real-time data by invoking the `longbridge` CLI. All other commands use bundled demo data.
+- API call logs are stored with Raycast `LocalStorage` and keep the latest Longbridge calls for inspection.
+- Quote data is fetched through Longbridge CLI commands such as `quote` and `static`.
+- Closed-market quotes may be cached briefly to reduce unnecessary API calls.
